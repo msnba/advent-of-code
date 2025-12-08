@@ -1,3 +1,3 @@
-# aoc2025
+# advent-of-code
 
-My solutions for Advent of Code 2025.
+My solutions for Advent of Code as I go.
