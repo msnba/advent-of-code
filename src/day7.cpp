@@ -64,17 +64,17 @@ void p1(Lib &l)
 
     cout << splitnum << endl;
 }
-long long search(int r, int c, const vector<string> &grid, vector<vector<long long>> &memory)
+long long search(int r, int c, const vector<string> &grid, vector<vector<long long>> &memory) // this is divine f**king intellect
 {
-    if (r < 0 || r >= grid.size() || c < 0 || c >= grid.size())
+    if (r < 0 || r >= grid.size() || c < 0 || c >= grid[0].size())
         return 0;
-    if (memory[r][c] != -1)
+    if (memory[r][c] != -1) // if it was already computed return it
         return memory[r][c];
 
     char ch = grid[r][c];
     long long total = 0;
 
-    if (ch == '^')
+    if (ch == '^') // if a splitter is hit paths are initialized to the left and right of it
     {
         if (c > 0)
             total += search(r, c - 1, grid, memory);
@@ -83,12 +83,12 @@ long long search(int r, int c, const vector<string> &grid, vector<vector<long lo
     }
     else
     {
-        if (r + 1 < grid.size())
+        if (r + 1 < grid.size()) // if not at last row continue downward
             total = search(r + 1, c, grid, memory);
         else
             total = 1;
     }
-    return memory[r][c] = total;
+    return memory[r][c] = total; // store total in memo table and return`
 }
 void p2(Lib &l)
 {
@@ -98,7 +98,7 @@ void p2(Lib &l)
     while (getline(l.input, line))
         grid.push_back(line);
 
-    vector<vector<long long>> memory(grid.size(), vector<long long>(grid[0].size(), -1));
+    vector<vector<long long>> memory(grid.size(), vector<long long>(grid[0].size(), -1)); // results of previous searches, every value is initially initialized to -1 to symbolize it not being computed
 
     cout << search(0, grid[0].size() / 2, grid, memory) << endl;
 }
