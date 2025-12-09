@@ -13,19 +13,8 @@ struct DSU
 {
     vector<int> parent, sz;
     DSU(int n) : parent(n), sz(n, 1) { iota(parent.begin(), parent.end(), 0); }
-    int find(int x) { return parent[x] == x ? x : parent[x] = find(parent[x]); }
-    void unite(int a, int b)
-    {
-        a = find(a);
-        b = find(b);
-        if (a == b)
-            return;
-        if (sz[a] < sz[b])
-            swap(a, b);
-        parent[b] = a;
-        sz[a] += sz[b];
-    }
-    bool unite_if_new(int a, int b) // used for p2
+    int find(int x) { return parent[x] == x ? x : parent[x] = find(parent[x]); } // recursive dsu finding function
+    bool unite(int a, int b)
     {
         a = find(a);
         b = find(b);
@@ -64,7 +53,6 @@ void p1(Lib &l)
     int n = boxes.size();
 
     vector<Pair> pairs;
-    pairs.reserve((size_t)n * (n - 1) / 2);
     for (int i = 0; i < n; i++)
     {
         for (int j = 0; j < i; j++)
@@ -79,27 +67,27 @@ void p1(Lib &l)
 
     sort(pairs.begin(), pairs.end(), [](const Pair &A, const Pair &B)
          {
-        if (A.d != B.d) return A.d < B.d;
-        if (A.a != B.a) return A.a < B.a;
+        if (A.d != B.d) return A.d < B.d; //CLOSEST pair first
+        if (A.a != B.a) return A.a < B.a; //sort by first index a
         return A.b < B.b; });
 
     int K = 1000;
-    K = min(K, (int)pairs.size());
+    K = min(K, (int)pairs.size()); // specifies a maximum, this is only for safety purposes
 
     DSU uf(n);
-    for (int i = 0; i < K; i++)
+    for (int i = 0; i < K; i++) // loop through allocated amount of pairs
     {
         uf.unite(pairs[i].a, pairs[i].b);
     }
 
-    auto sizes = uf.compSizes();
+    vector<int> sizes = uf.compSizes();
     sort(sizes.begin(), sizes.end(), greater<int>());
 
-    long long prod = 1;
+    long long total = 1;
     for (int i = 0; i < 3 && i < (int)sizes.size(); ++i)
-        prod *= sizes[i];
+        total *= sizes[i];
 
-    cout << prod << endl;
+    cout << total << endl;
 }
 void p2(Lib &l)
 {
@@ -115,7 +103,6 @@ void p2(Lib &l)
     int n = boxes.size();
 
     vector<Pair> pairs;
-    pairs.reserve((size_t)n * (n - 1) / 2);
     for (int i = 0; i < n; i++)
     {
         for (int j = 0; j < i; j++)
@@ -138,20 +125,20 @@ void p2(Lib &l)
     K = min(K, (int)pairs.size());
 
     DSU uf(n);
-    int components = n;
-    long long product = 0;
+    int left = n;
+    long long total = 0;
 
     for (size_t idx = 0; idx < pairs.size(); ++idx)
     {
         int a = pairs[idx].a;
         int b = pairs[idx].b;
-        if (uf.unite_if_new(a, b))
+        if (uf.unite(a, b))
         {
-            components--;
-            if (components == 1)
+            left--;
+            if (left == 1)
             {
-                product = 1LL * boxes[a][0] * boxes[b][0];
-                cout << product << "\n";
+                total = 1LL * boxes[a][0] * boxes[b][0];
+                cout << total << endl;
                 return;
             }
         }
