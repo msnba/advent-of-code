@@ -1,4 +1,5 @@
 #include <cmath>
+#include <unordered_map>
 #include "lib.h"
 using namespace std;
 
@@ -55,11 +56,11 @@ unordered_map<int, vector<int>> buildInt(const vector<p> &points) // scans all v
     }
 
     unordered_map<int, vector<int>> intervals; // final map of y values corresponding to x intervals of green tiles
-    for (auto &kv : crossings)
+    for (std::pair<const int, std::vector<int>> &rowcross : crossings)
     {
-        auto &xs = kv.second;
-        sort(xs.begin(), xs.end());
-        intervals[kv.first] = xs; // store as sorted list; every pair is an interval
+        std::vector<int> &xcoords = rowcross.second;
+        sort(xcoords.begin(), xcoords.end());
+        intervals[rowcross.first] = xcoords; // store as sorted list; every pair is an interval
     }
 
     return intervals;
@@ -69,16 +70,16 @@ bool valid(int xmin, int xmax, int ymin, int ymax,
 {
     for (int y = ymin; y <= ymax; y++)
     {
-        auto it = intervals.find(y); // if there are no green intervals for this row, the rectangle is invalid
-        if (it == intervals.end())
+        std::unordered_map<int, std::vector<int>>::iterator rowIt = intervals.find(y); // if there are no green intervals for this row, the rectangle is invalid
+        if (rowIt == intervals.end())
             return false;
 
-        const auto &xs = it->second; // get the sorted list of x intervals for the row
+        const std::vector<int> &rowXInts = rowIt->second; // get the sorted list of x intervals for the row
         int lo = 0;
-        for (; lo + 1 < xs.size() && xs[lo + 1] < xmin; lo += 2) // scans pairwise
+        for (; lo + 1 < rowXInts.size() && rowXInts[lo + 1] < xmin; lo += 2) // scans pairwise
             ;
 
-        if (lo >= xs.size() || xs[lo] > xmin || xs[lo + 1] < xmax) // if no suitable interval exists, or rectangle does not fully cover xmin xmax, rect is invalid
+        if (lo >= rowXInts.size() || rowXInts[lo] > xmin || rowXInts[lo + 1] < xmax) // if no suitable interval exists, or rectangle does not fully cover xmin xmax, rect is invalid
             return false;
     }
     return true;
@@ -100,7 +101,7 @@ void p2(Lib &l)
     // For every pair of red tiles, treat them as opposite corners of a supposed rectangle.
     // Check whether every tile inside of that rectangle is allowed.
 
-    auto intervals = buildInt(points);
+    std::unordered_map<int, std::vector<int>> intervals = buildInt(points);
 
     for (int i = 0; i < points.size(); i++)
     {
