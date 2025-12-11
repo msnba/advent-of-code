@@ -83,7 +83,10 @@ void p2(Lib &l)
 int main()
 {
     Lib l = Lib("input/day11input.txt");
+    l.start_timer();
     p1(l);
+    cout << "Elapsed: " << l.reset_timer() << " ms" << endl;
     p2(l);
+    cout << "Elapsed: " << l.end_timer() << " ms" << endl;
     return 0;
 }

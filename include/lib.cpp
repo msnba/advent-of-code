@@ -34,3 +34,22 @@ std::vector<std::string> Lib::split(const std::string &input, std::string delimi
 
     return splitted;
 }
+
+void Lib::start_timer()
+{
+    timer = std::chrono::high_resolution_clock::now();
+}
+long long Lib::end_timer() // milliseconds
+{
+    std::chrono::high_resolution_clock::time_point tend =
+        std::chrono::high_resolution_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+               tend - timer)
+        .count();
+}
+long long Lib::reset_timer()
+{
+    long long elapsed = Lib::end_timer();
+    Lib::start_timer();
+    return elapsed;
+}
