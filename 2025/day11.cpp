@@ -36,10 +36,10 @@ void p1(Lib &l)
 
     cout << search("you", nodes) << endl;
 }
-map<pair<string, pair<bool, bool>>, long> memo; // i did ts for one of the other problems dw bout it, it just stores which problems were computed so my computer doesnt catch on fire
+map<pair<string, pair<bool, bool>>, long> cache; // i did ts for one of the other problems dw bout it, it just stores which problems were computed so my computer doesnt catch on fire
 long search_mod(const string &node, unordered_map<string, vector<string>> &nodes, pair<bool, bool> visited)
 {
-    static map<pair<string, pair<bool, bool>>, long> memo; // its gotta be static so it stays during recursion
+    static map<pair<string, pair<bool, bool>>, long> cache; // its gotta be static so it stays during recursion
 
     if (node == "dac")
         visited.first = true;
@@ -47,17 +47,17 @@ long search_mod(const string &node, unordered_map<string, vector<string>> &nodes
         visited.second = true;
 
     pair<string, pair<bool, bool>> key(node, {visited.first, visited.second});
-    if (memo.count(key)) // if it exists in the map return it to save from having to recompute it
-        return memo[key];
+    if (cache.count(key)) // if it exists in the map return it to save from having to recompute it
+        return cache[key];
 
     if (node == "out") // base case
-        return memo[key] = (visited.first && visited.second) ? 1 : 0;
+        return cache[key] = (visited.first && visited.second) ? 1 : 0;
 
     long total = 0;
     for (string &next : nodes[node])
         total += search_mod(next, nodes, visited);
 
-    return memo[key] = total; // assigns the problem to an answer in the map so it can be grabbed at a later date
+    return cache[key] = total; // assigns the problem to an answer in the map so it can be grabbed at a later date
 }
 void p2(Lib &l)
 {
