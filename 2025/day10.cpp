@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <sstream>
+#include <map>
 #include "lib.h"
 using namespace std;
 
@@ -81,15 +82,74 @@ void p1(Lib &l)
     }
     cout << total << endl;
 }
+long solveMinPressesGF2(vector<int> &target, int n, const vector<vector<int>> &buttons)
+{
+    // solve ax=b for a minimal sum(x) over integers using BFS
+    map<vector<int>, long> dp;
+    vector<int> start(n, 0);
+    dp[start] = 0;
+
+    queue<vector<int>> q;
+    q.push(start);
+    while (!q.empty())
+    {
+        vector<int> cur = q.front();
+        q.pop();
+        long cursteps = dp[cur];
+        if (cur == target)
+            return cursteps;
+        for (size_t i = 0; i < buttons.size(); i++)
+        {
+            vector<int> next = cur;
+            for (size_t j = 0; j < buttons[i].size(); j++)
+            {
+                int idx = buttons[i][j];
+                next[idx] += 1; // increment affected counters
+            }
+            if (dp.find(next) == dp.end() || dp[next] > cursteps + 1)
+            {
+                dp[next] = cursteps + 1;
+                q.push(next);
+            }
+        }
+    }
+    return 0;
+}
+long long totalTime = 0;
 void p2(Lib &l)
 {
     l.ref();
     long total = 0;
     string line;
     int linen = 0;
+
     while (getline(l.input, line))
     {
-        // cout << linen++ << endl;
+        vector<string> parts = Lib::split(line, " ");
+
+        string joltStr = parts[parts.size() - 1];
+        vector<string> joltNums = Lib::split(joltStr.substr(1, joltStr.length() - 2), ",");
+        vector<int> target;
+        for (int i = 0; i < joltNums.size(); i++)
+            target.push_back(stoi(joltNums[i]));
+        int n = target.size();
+
+        vector<vector<int>> buttons;
+        for (int i = 1; i < parts.size() - 1; i++)
+        {
+            string token = parts[i];
+            vector<string> indices = Lib::split(token.substr(1, token.length() - 2), ",");
+            vector<int> btn;
+            for (size_t j = 0; j < indices.size(); j++)
+                btn.push_back(stoi(indices[j]));
+            buttons.push_back(btn);
+        }
+
+        total += solveMinPressesGF2(target, n, buttons);
+
+        long long temp = l.reset_timer();
+        cout << "Time for line " << linen++ << ": " << temp << " ms" << endl;
+        totalTime += temp;
     }
 
     cout << total << endl;
@@ -97,7 +157,11 @@ void p2(Lib &l)
 int main()
 {
     Lib l = Lib("input/day10input.txt");
+    l.start_timer();
     p1(l);
+    cout << "Elapsed: " << l.reset_timer() << " ms" << endl;
     p2(l);
+    cout << "Elapsed: " << totalTime << " ms" << endl;
+
     return 0;
 }
