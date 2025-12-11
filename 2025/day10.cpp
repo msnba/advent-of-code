@@ -5,12 +5,6 @@
 #include "lib.h"
 using namespace std;
 
-struct machine
-{
-    vector<int> indicators;
-    vector<vector<int>> buttons;
-};
-
 // state is represented as a bitmask integer
 // pressing a button is xor
 // search from 0 to target state
