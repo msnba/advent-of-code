@@ -1,5 +1,7 @@
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
+#include <sstream>
 #include "lib.h"
 using namespace std;
 
@@ -69,11 +71,9 @@ void p1(Lib &l)
 
         vector<int> buttons;
 
-        for (size_t i = 1; i < parts.size(); i++) // skips joltage and beginning
+        for (size_t i = 1; i < parts.size() - 1; i++) // skips joltage and beginning
         {
             string token = parts[i];
-            if (token.empty() || token[0] == '{')
-                break;
 
             vector<string> indices = Lib::split(token.substr(1, token.length() - 2), ","); // over complicated split by comma
 
@@ -91,23 +91,14 @@ void p2(Lib &l)
 {
     l.ref();
     long total = 0;
-
-    vector<vector<int>> buttons;
-
     string line;
-    while (getline(l.input, line)) // i can see that ts is not a xor bitmask 😭
+    int linen = 0;
+    while (getline(l.input, line))
     {
-        vector<string> parts = Lib::split(line, " ");
-        for (int i = 1; i < parts.size() - 1; i++)
-        {
-            vector<int> button;
-            for (char c : parts[i])
-                if (c != '(' && c != ')' && c != ',')
-                    button.push_back(c - '0');
-
-            buttons.push_back(button);
-        } // bfs?????
+        // cout << linen++ << endl;
     }
+
+    cout << total << endl;
 }
 int main()
 {
