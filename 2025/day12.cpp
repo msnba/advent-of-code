@@ -14,20 +14,13 @@ void p1(Lib &l)
         if (line.find('x') != string::npos) // if x is in the line
         {
             vector<string> parts = Lib::split(line, " ");
-            string dims = parts[0];
+            vector<string> wh = Lib::split(parts[0].erase(parts[0].size() - 1), "x");
 
-            if (dims.back() == ':')
-                dims.pop_back();
-
-            vector<string> wh = Lib::split(dims, "x");
-
-            int amt = 0;
+            int amt = 0; // amount of 3x3 grids to pack
             for (int i = 1; i < parts.size(); i++)
                 amt += stoi(parts[i]);
 
-            int blocks = (stoi(wh[0]) / 3) * (stoi(wh[1]) / 3);
-
-            if (amt <= blocks)
+            if (amt <= (stoi(wh[0]) / 3) * (stoi(wh[1]) / 3))
                 total++;
         }
     }
