@@ -1,6 +1,6 @@
 # advent-of-code
 
-My solutions for Advent of Code as I go.
+you know
 
 #### To Run A File:
 
