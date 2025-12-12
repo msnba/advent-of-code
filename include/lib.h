@@ -21,6 +21,6 @@ public:
     static std::vector<std::string> split(const std::string &input, const std::string delimiter);
 
     void start_timer();
-    long long end_timer();
-    long long reset_timer();
+    long end_timer();
+    long reset_timer();
 };

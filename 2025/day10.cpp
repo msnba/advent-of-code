@@ -4,6 +4,8 @@
 #include <sstream>
 #include <map>
 #include "lib.h"
+#include <functional>
+#include <queue>
 using namespace std;
 
 // state is represented as a bitmask integer
@@ -82,40 +84,135 @@ void p1(Lib &l)
     }
     cout << total << endl;
 }
-long solveMinPressesGF2(vector<int> &target, int n, const vector<vector<int>> &buttons)
+// ts beautiful implementation https://www.reddit.com/r/adventofcode/comments/1pk87hl/2025_day_10_part_2_bifurcate_your_way_to_victory/ cuz i partly gave up
+string key(const vector<int> &p) // convert pattern to key
 {
-    // solve ax=b for a minimal sum(x) over integers using BFS
-    map<vector<int>, long> dp;
-    vector<int> start(n, 0);
-    dp[start] = 0;
-
-    queue<vector<int>> q;
-    q.push(start);
-    while (!q.empty())
+    string key = "";
+    for (int i = 0; i < p.size(); ++i)
     {
-        vector<int> cur = q.front();
-        q.pop();
-        long cursteps = dp[cur];
-        if (cur == target)
-            return cursteps;
-        for (size_t i = 0; i < buttons.size(); i++)
+        key += to_string(p[i]) + ",";
+    }
+    return key;
+}
+
+map<vector<int>, int> patterns(vector<vector<int>> &coeffs) // generate all patterns
+{
+    map<vector<int>, int> out;
+    int num_buttons = coeffs.size();
+    int num_variables = coeffs[0].size();
+
+    function<void(int, int, vector<int> &)> comb;
+    comb = [&](int start, int k, vector<int> &current)
+    {
+        if (k == 0)
         {
-            vector<int> next = cur;
-            for (size_t j = 0; j < buttons[i].size(); j++)
+            vector<int> pattern(num_variables, 0);
+            for (size_t c = 0; c < current.size(); ++c)
             {
-                int idx = buttons[i][j];
-                next[idx] += 1; // increment affected counters
+                int idx = current[c];
+                for (int i = 0; i < num_variables; ++i)
+                {
+                    pattern[i] += coeffs[idx][i];
+                }
             }
-            if (dp.find(next) == dp.end() || dp[next] > cursteps + 1)
+            if (out.find(pattern) == out.end())
             {
-                dp[next] = cursteps + 1;
-                q.push(next);
+                out[pattern] = static_cast<int>(current.size());
+            }
+            return;
+        }
+        for (int i = start; i <= num_buttons - k; ++i)
+        {
+            current.push_back(i);
+            comb(i + 1, k - 1, current);
+            current.pop_back();
+        }
+    };
+
+    for (int len = 0; len <= num_buttons; ++len)
+    {
+        vector<int> current;
+        comb(0, len, current);
+    }
+
+    return out;
+}
+
+int solve_single(vector<vector<int>> &coeffs, const vector<int> &goal)
+{
+    map<vector<int>, int> pattern_costs = patterns(coeffs);
+    map<string, int> memo;
+
+    function<int(const vector<int> &)> solve_single_aux;
+    solve_single_aux = [&](const vector<int> &g) -> int
+    {
+        bool all_zero = true;
+        for (size_t i = 0; i < g.size(); ++i)
+        {
+            if (g[i] != 0)
+            {
+                all_zero = false;
+                break;
             }
         }
-    }
-    return 0;
+        if (all_zero)
+            return 0;
+
+        string gkey = key(g);
+        if (memo.find(gkey) != memo.end())
+            return memo[gkey];
+
+        int answer = 1000000;
+        map<vector<int>, int>::iterator it;
+        for (it = pattern_costs.begin(); it != pattern_costs.end(); ++it)
+        {
+            vector<int> pattern = it->first;
+            int pattern_cost = it->second;
+            bool valid = true;
+            vector<int> new_goal(g.size(), 0);
+            for (size_t i = 0; i < g.size(); ++i)
+            {
+                if (pattern[i] > g[i] || pattern[i] % 2 != g[i] % 2)
+                {
+                    valid = false;
+                    break;
+                }
+                new_goal[i] = (g[i] - pattern[i]) / 2;
+            }
+            if (valid)
+            {
+                int candidate = pattern_cost + 2 * solve_single_aux(new_goal);
+                if (candidate < answer)
+                    answer = candidate;
+            }
+        }
+
+        memo[gkey] = answer;
+        return answer;
+    };
+
+    return solve_single_aux(goal);
 }
-long long totalTime = 0;
+
+int solve(const vector<int> &target, const vector<vector<int>> &buttons)
+{
+    vector<vector<int>> coeffs;
+    for (size_t i = 0; i < buttons.size(); ++i)
+    {
+        vector<int> row(target.size(), 0);
+        for (size_t j = 0; j < buttons[i].size(); ++j)
+        {
+            int idx = buttons[i][j];
+            if (idx >= 0 && idx < static_cast<int>(target.size()))
+            {
+                row[idx] = 1;
+            }
+        }
+        coeffs.push_back(row);
+    }
+
+    return solve_single(coeffs, target);
+}
 void p2(Lib &l)
 {
     l.ref();
@@ -145,11 +242,7 @@ void p2(Lib &l)
             buttons.push_back(btn);
         }
 
-        total += solveMinPressesGF2(target, n, buttons);
-
-        long long temp = l.reset_timer();
-        cout << "Time for line " << linen++ << ": " << temp << " ms" << endl;
-        totalTime += temp;
+        total += solve(target, buttons);
     }
 
     cout << total << endl;
@@ -159,9 +252,9 @@ int main()
     Lib l = Lib("input/day10input.txt");
     l.start_timer();
     p1(l);
-    cout << "Elapsed: " << l.reset_timer() << " ms" << endl;
+    cout << "Elapsed: " << (double)l.reset_timer() << " ms" << endl;
     p2(l);
-    cout << "Elapsed: " << totalTime << " ms" << endl;
+    cout << "Elapsed: " << (double)l.reset_timer() << " ms" << endl;
 
     return 0;
 }

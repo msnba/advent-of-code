@@ -39,7 +39,7 @@ void Lib::start_timer()
 {
     timer = std::chrono::high_resolution_clock::now();
 }
-long long Lib::end_timer() // milliseconds
+long Lib::end_timer() // milliseconds
 {
     std::chrono::high_resolution_clock::time_point tend =
         std::chrono::high_resolution_clock::now();
@@ -47,7 +47,7 @@ long long Lib::end_timer() // milliseconds
                tend - timer)
         .count();
 }
-long long Lib::reset_timer()
+long Lib::reset_timer()
 {
     long long elapsed = Lib::end_timer();
     Lib::start_timer();
