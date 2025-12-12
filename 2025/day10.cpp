@@ -94,104 +94,122 @@ string key(const vector<int> &p) // convert pattern to key
     }
     return key;
 }
-
-map<vector<int>, int> patterns(vector<vector<int>> &coeffs) // generate all patterns
+void comb(int start,
+          int k,
+          vector<int> &current,
+          const vector<vector<int>> &coeffs,
+          map<vector<int>, int> &out)
 {
-    map<vector<int>, int> out;
     int num_buttons = coeffs.size();
     int num_variables = coeffs[0].size();
 
-    function<void(int, int, vector<int> &)> comb;
-    comb = [&](int start, int k, vector<int> &current)
+    if (k == 0)
     {
-        if (k == 0)
-        {
-            vector<int> pattern(num_variables, 0);
-            for (size_t c = 0; c < current.size(); ++c)
-            {
-                int idx = current[c];
-                for (int i = 0; i < num_variables; ++i)
-                {
-                    pattern[i] += coeffs[idx][i];
-                }
-            }
-            if (out.find(pattern) == out.end())
-            {
-                out[pattern] = static_cast<int>(current.size());
-            }
-            return;
-        }
-        for (int i = start; i <= num_buttons - k; ++i)
-        {
-            current.push_back(i);
-            comb(i + 1, k - 1, current);
-            current.pop_back();
-        }
-    };
+        vector<int> pattern(num_variables, 0);
+        // sum column-wise how many times each variable is toggled
+        for (int idx : current)
+            for (int i = 0; i < num_variables; ++i)
+                pattern[i] += coeffs[idx][i];
+
+        // out maps pattern to min button count for producing that pattern once
+        if (!out.count(pattern))
+            out[pattern] = (int)current.size();
+        return;
+    }
+
+    for (int i = start; i <= num_buttons - k; ++i)
+    {
+        current.push_back(i);
+        comb(i + 1, k - 1, current, coeffs, out);
+        current.pop_back();
+    }
+}
+
+// go over all possible patterns from pressing any subset of buttons
+// each pattern [i] = number of presses affecting variable i
+
+map<vector<int>, int> patterns(vector<vector<int>> &coeffs)
+{
+    map<vector<int>, int> out;
+    int num_buttons = coeffs.size();
 
     for (int len = 0; len <= num_buttons; ++len)
     {
         vector<int> current;
-        comb(0, len, current);
+        comb(0, len, current, coeffs, out);
     }
 
     return out;
 }
 
+int solve_single_aux(const vector<int> &g,
+                     const map<vector<int>, int> &pattern_costs,
+                     map<string, int> &memo)
+{
+    // base
+    bool zero = true;
+    for (int v : g)
+    {
+        if (v != 0)
+        {
+            zero = false;
+            break;
+        }
+    }
+    if (zero)
+        return 0;
+
+    // mem check
+    string gkey = key(g);
+    if (memo.find(gkey) != memo.end())
+        return memo[gkey];
+
+    int answer = 1000000;
+
+    map<vector<int>, int>::const_iterator it;
+    for (it = pattern_costs.begin(); it != pattern_costs.end(); ++it)
+    {
+        const vector<int> &pattern = it->first;
+        int pattern_cost = it->second;
+
+        bool valid = true;
+        vector<int> new_goal(g.size(), 0);
+
+        // validate parity and mag
+        for (size_t i = 0; i < g.size(); ++i)
+        {
+            if (pattern[i] > g[i] || (pattern[i] % 2 != g[i] % 2))
+            {
+                valid = false;
+                break;
+            }
+            new_goal[i] = (g[i] - pattern[i]) / 2;
+        }
+
+        if (valid)
+        {
+            int candidate =
+                pattern_cost + 2 * solve_single_aux(new_goal, pattern_costs, memo);
+            if (candidate < answer)
+                answer = candidate;
+        }
+    }
+
+    memo[gkey] = answer;
+    return answer;
+};
+
+// recursive halfing strategy
+// coeffs = button to variable matrix
+// goal = target voltages
+
 int solve_single(vector<vector<int>> &coeffs, const vector<int> &goal)
 {
+    // precompute all patterns reachable by pressing each button 0/1 times
     map<vector<int>, int> pattern_costs = patterns(coeffs);
     map<string, int> memo;
 
-    function<int(const vector<int> &)> solve_single_aux;
-    solve_single_aux = [&](const vector<int> &g) -> int
-    {
-        bool all_zero = true;
-        for (size_t i = 0; i < g.size(); ++i)
-        {
-            if (g[i] != 0)
-            {
-                all_zero = false;
-                break;
-            }
-        }
-        if (all_zero)
-            return 0;
-
-        string gkey = key(g);
-        if (memo.find(gkey) != memo.end())
-            return memo[gkey];
-
-        int answer = 1000000;
-        map<vector<int>, int>::iterator it;
-        for (it = pattern_costs.begin(); it != pattern_costs.end(); ++it)
-        {
-            vector<int> pattern = it->first;
-            int pattern_cost = it->second;
-            bool valid = true;
-            vector<int> new_goal(g.size(), 0);
-            for (size_t i = 0; i < g.size(); ++i)
-            {
-                if (pattern[i] > g[i] || pattern[i] % 2 != g[i] % 2)
-                {
-                    valid = false;
-                    break;
-                }
-                new_goal[i] = (g[i] - pattern[i]) / 2;
-            }
-            if (valid)
-            {
-                int candidate = pattern_cost + 2 * solve_single_aux(new_goal);
-                if (candidate < answer)
-                    answer = candidate;
-            }
-        }
-
-        memo[gkey] = answer;
-        return answer;
-    };
-
-    return solve_single_aux(goal);
+    return solve_single_aux(goal, pattern_costs, memo);
 }
 
 int solve(const vector<int> &target, const vector<vector<int>> &buttons)
